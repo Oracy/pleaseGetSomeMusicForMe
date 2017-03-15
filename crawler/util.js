@@ -2,8 +2,12 @@ const fs = require( 'fs' )
 const Entities = require( 'html-entities' ).AllHtmlEntities
 const entities = new Entities()
 
+const error = ( e ) => console.log( 'err', e )
+
 const getIndex = ( s, song ) => 
   entities.decode( s.tit_art ) == entities.decode( song.tit_art )
+
+const getFind = ( el ) => !el.includes( '/' ) && !el.includes( '\\' )
 
 const toNewFuckingPromise = ( promise, index ) => 
   promise.catch( () => { throw index } )
@@ -38,7 +42,7 @@ const continuesWithTheRace = ( promises ) => ( index ) => {
   // remove it from the list of promises and just continue the race.
   let p = promises.splice( index, 1 )[ 0 ]
   
-  p.catch( e => console.log( 'err', e ) )
+  p.catch( error )
 
   return Promise.enhancedRace( promises )
 }
@@ -49,7 +53,6 @@ Promise.enhancedRace = ( promises ) =>
     : rejectWhenDontExistsProviders()
 
 
-const getFind = ( el ) => !el.includes( '/' ) && !el.includes( '\\' )
 
 const findBestArtistMatch = ( str, anotherString ) => {
   //TODO: improve validation
