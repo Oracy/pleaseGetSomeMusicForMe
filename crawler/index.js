@@ -26,10 +26,16 @@ const errorDontChoseMusic = () =>
 const errorDirectory = ( err ) => 
   console.log('Nao rolou criar as pastas aqui', err)
 
-const getSongs = (song) => 
+const getSongs = ( song ) => 
   answers.songs.includes( entities.decode( song.tit_art ) )
- 
-const choose = (songs, cb) => {
+
+const download = ( body, title, el, ARTISTPATH ) => 
+  body.download(  title, 
+                  entities.decode( el.url ), 
+                  ARTISTPATH + '/' +
+                  utils.decodeHTMLEntities( `${title}.mp3` ) )
+
+const choose = ( songs, cb ) => {
 
   const artists = []
 
@@ -84,26 +90,29 @@ Promise.enhancedRace( [
           const cb = ( err ) =>
             err 
               ? errorDirectory( err )
-              : body.download(title, entities.decode(el.url), ARTISTPATH+'/'+utils.decodeHTMLEntities(title+'.mp3'))
+              : download( body )
 
           Promise.
-            all([{
-              then: (resolve, reject) => {
-                utils.ensureExists(PATH, 0744, (err) => {
-                  return resolve(0)
-                })
-              }
-            }, {
-              then: (resolve, reject) => utils.ensureExists(ARTISTPATH, 0744, (err) => resolve(err))
-            }])
+            all( [
+            {
+              then: ( resolve, reject ) => 
+                utils.ensureExists(PATH, 0744, ( err ) => resolve( 0 ) )
+            }, 
+            {
+              then: ( resolve, reject ) => 
+              utils.ensureExists(ARTISTPATH, 0744, ( err ) => resolve( err ) )
+            } ] )
             //artist folder
-            .then(err => (err.reduce((f, s) => f || s)) ? Promise.reject(err) : cb(null))
-            .catch(err => cb(err))
+            .then( err =>  // WTF IS THT???
+              ( err.reduce( ( f, s ) => f || s ) ) 
+                ? Promise.reject( err ) 
+                : cb( null ) )
+            .catch( err => cb( err ) )
           
         })
       
       return response.songs
-  })
-}, function (err) {
-  console.log(err)
-})
+  } )
+}, ( err ) => console.log( err ) )
+
+
