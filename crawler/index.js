@@ -12,69 +12,78 @@ const SliderKZ = require('./providers/sliderkz')
 const MusicPleer = require('./providers/musicpleer')
 const YoutubeInMp3 = require('./providers/youtubeinmp3')
 
-find = process.argv.filter( utils.getFind ).join('+')
+const music = process.argv.filter( utils.getFind ).join('+')
 
 const events = require('events')
 const eventEmitter = new events.EventEmitter()
 
 console.time( 'tempo para receber a resposta' )
-console.log(`\n\n\n\t\t INICIANDO A BUSCA PARA: ${find} ` )
+console.log(`\n\n\n\t\t INICIANDO A BUSCA PARA: ${music} ` )
 
+const errorDontChoseMusic = () => 
+  console.log( "não foi escolhido/encontrado nenhuma música" )
+
+const errorDirectory = ( err ) => 
+  console.log('Nao rolou criar as pastas aqui', err)
+
+const getSongs = (song) => 
+  answers.songs.includes( entities.decode( song.tit_art ) )
+ 
 const choose = (songs, cb) => {
 
-    const artists = []
+  const artists = []
 
-    const question1 = {
-      type: 'checkbox',
-      message: 'Selecione as canções',
-      name: 'songs',
-      choices: [
-        new inquirer.Separator(' = As sonzeiras = ')
-      ],
-      validate: (answer) => !! answer.length
-    }
-
-    songs.map( ( song, key ) => {
-        question1.choices.push( { name: song.tit_art } )
-        if ( !artists.includes( song.artist ) && song.artist != '' ) {
-          artists.push( song.artist  )
-        }
-        
-        question1.choices.push( { name: entities.decode(song.tit_art) })
-    })
-
-    const artist = ( artists.length > 1 ) ? artists.reduce( utils.findBestArtistMatch ) : artists[0]
-
-    inquirer.prompt([
-      question1
-    ]).then( ( answers ) => {
-        return cb( null, {
-            artist: artist,
-            songs: songs
-            .filter((song) => answers.songs.includes(entities.decode(song.tit_art)))
-            .filter(utils.removeDupes)
-          }
-        )
-    });
-
+  const question1 = {
+    type: 'checkbox',
+    message: 'Selecione as canções',
+    name: 'songs',
+    choices: [
+      new inquirer.Separator(' = As sonzeiras = ')
+    ],
+    validate: (answer) => !! answer.length
   }
 
-Promise.enhancedRace([
-  MusicPleer.search(find),
-  SliderKZ.search(find),
-  YoutubeInMp3.search(find)
-]).then(body => {
+  songs.map( ( song, key ) => {
+      if ( !artists.includes( song.artist ) && song.artist != '' ) {
+        artists.push( song.artist  )
+      }
+      
+      question1.choices.push( { name: entities.decode(song.tit_art) })
+  })
 
-  choose(body.songs, (err, response) => {
+  const artist = ( artists.length > 1 ) 
+                    ? artists.reduce( utils.findBestArtistMatch ) 
+                    : artists[0]
+
+  const objAnswers = {
+    artist,
+    songs: songs
+    .filter( getSongs )
+    .filter( utils.removeDupes )
+  }
+
+  inquirer.prompt( [ question1 ] )
+          .then( ( answers ) => cb( null, objAnswers ) )
+
+}
+
+Promise.enhancedRace( [
+  MusicPleer.search( music ),
+  SliderKZ.search( music ),
+  YoutubeInMp3.search( music )
+] ).then( ( body ) => {
+
+  choose( body.songs, ( err, response ) => {
 
     ( !response.songs )
-      ? console.log("não foi escolhido/encontrado nenhuma música")
-      : response.songs.map( el => {
-          const ARTISTPATH = PATH + entities.decode(response.artist).replace('/', '_')
-          const title = entities.decode(el.tit_art)
-          const cb = (err) =>
-          err 
-              ? console.log('Nao rolou criar as pastas aqui', err)
+      ? errorDontChoseMusic()
+      : response.songs.map( ( el ) => {
+          const title = entities.decode( el.tit_art )
+          const ARTISTPATH = PATH + entities.decode( response.artist )
+                                            .replace('/', '_')
+          const cb = ( err ) =>
+            err 
+              ? errorDirectory( err )
               : body.download(title, entities.decode(el.url), ARTISTPATH+'/'+utils.decodeHTMLEntities(title+'.mp3'))
 
           Promise.

@@ -4,8 +4,8 @@ const entities = new Entities()
 
 var getIndex = ( s, song ) => entities.decode(s.tit_art) == entities.decode(song.tit_art)
 
-Promise.enhancedRace = function(promises) {
-  if (promises.length < 1) {
+Promise.enhancedRace = (promises) => {
+  if ( !promises.length ) {
     return Promise.reject('não há buscadores');
   }
   // There is no way to know which promise is rejected.
@@ -19,48 +19,55 @@ Promise.enhancedRace = function(promises) {
   })
 }
 
+const getFind = ( el ) => !el.includes( '/' ) && !el.includes( '\\' )
+
+const findBestArtistMatch = ( str, anotherString ) => {
+  //TODO: improve validation
+  if ( anotherString.length > anotherString.length ) {
+    let match = new RegExp( str, 'i' ).test( find.replace( '+', ' ' ) )
+
+    if (!match) {
+        return anotherString
+    }
+  }
+
+  return str
+}
+
+
+const decodeHTMLEntities = ( str ) => {
+
+  if( str && typeof str === 'string' ) {
+    str = str.replace( /<script[^>]*>([\S\s]*?)<\/script>/gmi, '' )
+    str = str.replace( /<\/?\w(?:[^"'>]|"[^"]*"|'[^']*')*>/gmi, '' )
+    str = str.replace( /&#x[A-Z][0-9]/gmi, '' )
+  }
+  return str
+}
+
+const ensureExists = ( path, mask, cb ) => {
+  if ( typeof mask === 'function' ) {
+    cb = mask
+    mask = 0777
+  }
+  fs.mkdir( path.replace('"', '').replace('"', ''), mask, (err) =>
+    ( err ) 
+      ? ( err.code == 'EEXIST' ) ? cb( null ) : cb( err )
+      : cb( null )
+  )
+}
+
+const removeDupes = (song, i, self) => 
+  ( self.length > 1 ) 
+    ? self.findIndex( s => getIndex( s, song ) ) === i 
+    : true
 
 module.exports = {
-  getFind: ( el ) => !el.includes( '/' ) && !el.includes( '\\' ),
-
-  findBestArtistMatch: ( str, anotherString ) => {
-    //TODO: improve validation
-    if ( anotherString.length > anotherString.length ) {
-      let match = new RegExp( str, 'i' ).test( find.replace( '+', ' ' ) )
-
-      if (!match) {
-          return anotherString
-      }
-    }
-
-    return str
-  },
-
-  decodeHTMLEntities: ( str ) => {
-
-    if( str && typeof str === 'string' ) {
-      str = str.replace( /<script[^>]*>([\S\s]*?)<\/script>/gmi, '' )
-      str = str.replace( /<\/?\w(?:[^"'>]|"[^"]*"|'[^']*')*>/gmi, '' )
-      str = str.replace( /&#x[A-Z][0-9]/gmi, '' )
-    }
-    return str
-  },
-
-  ensureExists: ( path, mask, cb ) => {
-    if ( typeof mask === 'function' ) {
-      cb = mask
-      mask = 0777
-    }
-    fs.mkdir( path.replace('"', '').replace('"', ''), mask, (err) =>
-      ( err ) 
-        ? ( err.code == 'EEXIST' ) ? cb( null ) : cb( err )
-        : cb( null )
-    )
-  },
-
-  removeDupes: (song, i, self) => {
-    return ( self.length > 1 ) ? self.findIndex( s => getIndex( s, song ) ) === i : true
-  }
+  getFind,
+  findBestArtistMatch,
+  decodeHTMLEntities,
+  ensureExists,
+  removeDupes
 
 } 
 
