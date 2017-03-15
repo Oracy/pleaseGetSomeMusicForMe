@@ -8,20 +8,46 @@ const getIndex = ( s, song ) =>
 const toNewFuckingPromise = ( promise, index ) => 
   promise.catch( () => { throw index } )
 
-Promise.enhancedRace = ( promises ) => {
-  if ( !promises.length ) {
-    return Promise.reject( 'não há buscadores' )
-  }
+// Promise.enhancedRace = ( promises ) => {
+//   if ( !promises.length ) {
+//     return Promise.reject( 'não há buscadores' )
+//   }
+//   // There is no way to know which promise is rejected.
+//   // So we map it to a new promise to return the index when it fails
+//   let indexPromises = promises.map( toNewFuckingPromise )
+
+//   return Promise.race( indexPromises )
+//                 .catch( index => continuesWithTheRace( promises ) )
+// }
+
+const rejectWhenDontExistsProviders = () => 
+  Promise.reject( 'não há buscadores' )
+
+
+const raceThisShit = ( promises, toNewFuckingPromise, continuesWithTheRace ) => {
   // There is no way to know which promise is rejected.
   // So we map it to a new promise to return the index when it fails
   let indexPromises = promises.map( toNewFuckingPromise )
-  return Promise.race(indexPromises).catch(index => {
-    // The promise has rejected, remove it from the list of promises and just continue the race.
-    let p = promises.splice(index, 1)[0]
-    p.catch(e => console.log('err', e))
-    return Promise.enhancedRace(promises)
-  })
+
+  return Promise.race( indexPromises )
+                .catch( index => continuesWithTheRace( promises ) )
 }
+
+const continuesWithTheRace = ( promises ) => ( index ) => {
+  // The promise has rejected, 
+  // remove it from the list of promises and just continue the race.
+  let p = promises.splice( index, 1 )[ 0 ]
+  
+  p.catch( e => console.log( 'err', e ) )
+
+  return Promise.enhancedRace( promises )
+}
+
+Promise.enhancedRace = ( promises ) =>
+  ( promises.length )
+    ? raceThisShit( promises, toNewFuckingPromise, continuesWithTheRace )
+    : rejectWhenDontExistsProviders()
+
 
 const getFind = ( el ) => !el.includes( '/' ) && !el.includes( '\\' )
 
@@ -72,6 +98,5 @@ module.exports = {
   decodeHTMLEntities,
   ensureExists,
   removeDupes
-
 } 
 
