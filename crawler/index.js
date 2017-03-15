@@ -50,9 +50,8 @@ const choose = ( songs, cb ) => {
   }
 
   songs.map( ( song, key ) => {
-      if ( !artists.includes( song.artist ) && song.artist != '' ) {
-        artists.push( song.artist  )
-      }
+      if ( !artists.includes( song.artist ) && song.artist != '' ) 
+        artists.push( song.artist )
       
       question1.choices.push( { name: entities.decode(song.tit_art) })
   })
@@ -63,9 +62,7 @@ const choose = ( songs, cb ) => {
 
   const objAnswers = {
     artist,
-    songs: songs
-    .filter( getSongs )
-    .filter( utils.removeDupes )
+    songs: songs.filter( getSongs ).filter( utils.removeDupes )
   }
 
   inquirer.prompt( [ question1 ] )
