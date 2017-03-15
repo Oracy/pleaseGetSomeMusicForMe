@@ -1,21 +1,25 @@
-const fs = require('fs')
-const Entities = require('html-entities').AllHtmlEntities
+const fs = require( 'fs' )
+const Entities = require( 'html-entities' ).AllHtmlEntities
 const entities = new Entities()
 
-var getIndex = ( s, song ) => entities.decode(s.tit_art) == entities.decode(song.tit_art)
+const getIndex = ( s, song ) => 
+  entities.decode( s.tit_art ) == entities.decode( song.tit_art )
 
-Promise.enhancedRace = (promises) => {
+const toNewFuckingPromise = ( promise, index ) => 
+  promise.catch( () => { throw index } )
+
+Promise.enhancedRace = ( promises ) => {
   if ( !promises.length ) {
-    return Promise.reject('não há buscadores');
+    return Promise.reject( 'não há buscadores' )
   }
   // There is no way to know which promise is rejected.
   // So we map it to a new promise to return the index when it fails
-  let indexPromises = promises.map((p, index) => p.catch(() => {throw index;}));
+  let indexPromises = promises.map( toNewFuckingPromise )
   return Promise.race(indexPromises).catch(index => {
     // The promise has rejected, remove it from the list of promises and just continue the race.
-    let p = promises.splice(index, 1)[0];
-    p.catch(e => console.log('err', e));
-    return Promise.enhancedRace(promises);
+    let p = promises.splice(index, 1)[0]
+    p.catch(e => console.log('err', e))
+    return Promise.enhancedRace(promises)
   })
 }
 

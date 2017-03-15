@@ -1,21 +1,22 @@
 #!/usr/bin/env node
-const os = require(`os`)
-const fs = require(`fs`)
-
-const utils = require('./util')
-
-const inquirer = require('inquirer')
-const Entities = require('html-entities').AllHtmlEntities
-const entities = new Entities()
 const PATH = './musics/'
-const SliderKZ = require('./providers/sliderkz')
-const MusicPleer = require('./providers/musicpleer')
-const YoutubeInMp3 = require('./providers/youtubeinmp3')
 
-const music = process.argv.filter( utils.getFind ).join('+')
+const os = require( `os` )
+const fs = require( `fs` )
+const utils = require( './util' )
+
+const SliderKZ = require( './providers/sliderkz' )
+const MusicPleer = require( './providers/musicpleer' )
+const YoutubeInMp3 = require( './providers/youtubeinmp3' )
 
 const events = require('events')
 const eventEmitter = new events.EventEmitter()
+
+const inquirer = require( 'inquirer' )
+const Entities = require( 'html-entities' ).AllHtmlEntities
+const entities = new Entities()
+
+const music = process.argv.filter( utils.getFind ).join( '+' )
 
 console.time( 'tempo para receber a resposta' )
 console.log(`\n\n\n\t\t INICIANDO A BUSCA PARA: ${music} ` )
@@ -89,16 +90,16 @@ Promise.enhancedRace( [
               ? errorDirectory( err )
               : download( body )
 
-          Promise.
-            all( [
-            {
+          Promise.all( 
+          [ {
               then: ( resolve, reject ) => 
                 utils.ensureExists(PATH, 0744, ( err ) => resolve( 0 ) )
             }, 
             {
               then: ( resolve, reject ) => 
               utils.ensureExists(ARTISTPATH, 0744, ( err ) => resolve( err ) )
-            } ] )
+            } 
+          ] )
             //artist folder
             .then( err =>  // WTF IS THT???
               ( err.reduce( ( f, s ) => f || s ) ) 
